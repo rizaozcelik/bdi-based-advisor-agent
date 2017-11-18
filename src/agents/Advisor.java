@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 
 import misc.Recommendation;
@@ -20,8 +21,8 @@ public class Advisor {
 	private static final String DB_PASSWORD = "12345";
 	private static Connection dbConnection;
 	// private static int genre = 0;
-	private static Double averageRating; // Average rating of the recommended
-											// movie
+	// private static Double averageRating; // Average rating of the recommended
+	// movie
 	// private static ArrayList<double[]> friendRecommendations = new
 	// ArrayList<double[]>(); // Movies
 	// private static ArrayList<double[]> friendsFriendRecommendations;
@@ -31,23 +32,26 @@ public class Advisor {
 	private static Double[] recommendedMovie; // NOT IMPLEMENTED HOW TO ACQUIRE
 	// private static int genreProfessional;
 
-	public static double[] execute() {
+	public static ArrayList<Recommendation> execute() {
 		recommendations = new ArrayList<Recommendation>();
 		watchedMovies = new HashSet<Integer>();
-		double selectedMovieQuality = -1, selectedMoviePrefernce = -1;
 		try {
 			if (initDB()) {
 				int selectedGenre = getGenreToWatch();
+				populateWatchedMovies(selectedGenre);
 				getRecommendationFromFriend(selectedGenre);
-				if (recommendations.isEmpty() || allMoviesWatched()) {
+				if (recommendations.isEmpty() || allRecommendedMoviesAreWatched()) {
 					// If no non-watched movie is advised by direct friends..
 					getRecommendationFromFriendsOfFriends(selectedGenre);
 					getProfessionalRecommendation(selectedGenre);
-				} else {
-					// Line to set recommended movie fields
-					// TODO: update quality and prefs in planner(preferably) or runner, not here
-					// update trust value of the random guy if his movie is watched.
 				}
+				Collections.sort(recommendations);
+				return recommendations;
+					// Line to set recommended movie fields
+					// TODO: update quality and prefs in planner(preferably) or
+					// runner, not here
+					// update trust value of the random guy if his movie is
+					// watched.
 			} else {
 				System.out.println("Error in DB connection");
 			}
@@ -55,7 +59,7 @@ public class Advisor {
 		} catch (SQLException sql) {
 			System.out.println("Error in DB connection in methods");
 		}
-		return new double[] { selectedMovieQuality, selectedMoviePrefernce };
+		return null;
 	}
 
 	private static boolean initDB() {
@@ -112,19 +116,37 @@ public class Advisor {
 		return -1;
 	}
 
+	private static void populateWatchedMovies(int selectedGenre) {
+		try {
+			Statement stmt = dbConnection.createStatement();
+			String watchedMoviesQuery = "SELECT MOVIEID FROM movie_ratings " + "WHERE userID = " + USER_ID
+					+ " AND genreID = " + selectedGenre + ";";
+			ResultSet rs = stmt.executeQuery(watchedMoviesQuery);
+			while (rs.next()) {
+				watchedMovies.add(rs.getInt("movieid"));
+			}
+			rs.close();
+			stmt.close();
+		} catch (SQLException e) {
+			System.out.println("Error in db connection of watched movie population");
+			e.printStackTrace();
+		}
+
+	}
+
 	// Returns movie ID and movie rate for
 	private static void getRecommendationFromFriend(int selectedGenre) throws SQLException {
 		Statement stmt = dbConnection.createStatement();
+		// No need to ortder by since they will be ordered later
 		String friendRecommendationQuery = "SELECT movie_ratings.movieID, movie_ratings.userID, movie_ratings.movieRating, trust.trustValue, movie_ratings.movieRating*trust.trustValue as Watchability "
 				+ "FROM trust INNER JOIN movie_ratings ON movie_ratings.userID = trust.trusteeID "
-				+ "WHERE trust.trustorID = " + USER_ID + " AND movie_ratings.genreID = " + selectedGenre
-				+ " ORDER BY Watchability DESC;";
+				+ "WHERE trust.trustorID = " + USER_ID + " AND movie_ratings.genreID = " + selectedGenre + ";";
 
 		ResultSet rs = stmt.executeQuery(friendRecommendationQuery);
 		while (rs.next()) {
 			Recommendation recommendation = new Recommendation(rs.getInt("movie_ratings.movieID"),
 					rs.getInt("movie_ratings.userID"), rs.getDouble("movie_ratings.movieRating"),
-					rs.getInt("trust.trustValue"));
+					rs.getDouble("trust.trustValue"), rs.getDouble("watchability"));
 			// friendRecommendation[0] = rs.getDouble("movie_ratings.movieID");
 			// friendRecommendation[1] = rs.getDouble("movie_ratings.userID");
 			// friendRecommendation[2] =
@@ -138,14 +160,14 @@ public class Advisor {
 
 	private static void getRecommendationFromFriendsOfFriends(int genre) throws SQLException {
 		Statement stmt = dbConnection.createStatement();
+		// No need for order by since they will be ordered later.
 		String friendRecommendationQuery = "SELECT moviesbygenre.movieID, moviesbygenre.userID, moviesbygenre.movieRating, friendsfriend.trustValue, moviesbygenre.movieRating*friendsfriend.trustValue as Watchability "
 				+ "FROM (SELECT friends.trusteeID as trusteeID, me.trustValue*friends.trustValue as trustValue "
 				+ "	   FROM (SELECT * FROM trust WHERE trust.trustorID = " + USER_ID + ") as me "
 				+ "		     INNER JOIN " + "            trust as friends "
 				+ "	   WHERE me.trusteeID = friends.trustorID) " + "	   AS friendsfriend " + "	   INNER JOIN "
 				+ "	  (SELECT * " + "      FROM movie_ratings " + "      WHERE movie_ratings.genreID = " + genre + ") "
-				+ "      AS moviesbygenre " + "ON moviesbygenre.userID = friendsfriend.trusteeID "
-				+ "ORDER BY Watchability DESC;";
+				+ "      AS moviesbygenre " + "ON moviesbygenre.userID = friendsfriend.trusteeID; ";
 		ResultSet rs = stmt.executeQuery(friendRecommendationQuery);
 		// friendsFriendRecommendations.clear();
 		while (rs.next()) {
@@ -161,7 +183,7 @@ public class Advisor {
 			// friendsFriendRecommendations.add(friendsFriendRecommendation);
 			Recommendation recommendation = new Recommendation(rs.getInt("movie_ratings.movieID"),
 					rs.getInt("movie_ratings.userID"), rs.getDouble("movie_ratings.movieRating"),
-					rs.getInt("trust.trustValue"));
+					rs.getDouble("trust.trustValue"), rs.getDouble("watchability"));
 			recommendations.add(recommendation);
 		}
 		rs.close();
@@ -208,8 +230,11 @@ public class Advisor {
 				// rs.getDouble("movie_ratings.movieRating");
 				// friendsFriendRecommendation[3] = 0.5;
 				// friendsFriendRecommendations.add(friendsFriendRecommendation);
+				int movieID = rs.getInt("movie_ratings.movieID");
+				double movieRating = rs.getDouble("movie_ratings.movieRating");
+				double watchability = movieRating * 0.5 + getAverageRatingOfMovie(movieID) * 0.5;
 				Recommendation recommendation = new Recommendation(rs.getInt("movie_ratings.movieID"),
-						genreProfessional, rs.getDouble("movie_ratings.movieRating"), 0.5);
+						genreProfessional, movieRating, 0.5, watchability);
 				recommendations.add(recommendation);
 			}
 			rs.close();
@@ -221,17 +246,19 @@ public class Advisor {
 
 	}
 
-	private static int recommendedMovieAverage() throws SQLException {
+	private static double getAverageRatingOfMovie(int movieID) throws SQLException {
 		Statement stmt = dbConnection.createStatement();
-		String movieAverageQuery = "SELECT movieID, AVG(movieRating) as averageRating, COUNT(movieRating) as numberOfRatings "
-				+ "FROM movie_ratings " + "WHERE movieID = " + recommendedMovie + ";";
+		String movieAverageQuery = "SELECT AVG(movieRating) as averageRating " + "FROM movie_ratings "
+				+ "WHERE movieID = " + movieID + ";";
 		ResultSet rs = stmt.executeQuery(movieAverageQuery);
 		rs.next();
-		averageRating = rs.getDouble("averageRating");
-		return 1;
+		double averageRating = rs.getDouble("averageRating");
+		rs.close();
+		stmt.close();
+		return averageRating;
 	}
 
-	private static boolean allMoviesWatched() {
+	private static boolean allRecommendedMoviesAreWatched() {
 		for (Recommendation recommendation : recommendations) {
 			if (!watchedMovies.contains(recommendation.movieID)) {
 				return false;

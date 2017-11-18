@@ -14,7 +14,7 @@ public class Runner {
 	public static int lastObligedEndTime = 0;
 	
 	public static void main(String[] args) throws Exception {
-		Advisor.execute();
+		System.out.println(Advisor.execute());
 		int x = 1;
 		if(x == 1){
 			System.exit(1);
