@@ -20,17 +20,9 @@ public class Advisor {
 	private static final String DB_USER = "root";
 	private static final String DB_PASSWORD = "12345";
 	private static Connection dbConnection;
-	// private static int genre = 0;
-	// private static Double averageRating; // Average rating of the recommended
-	// movie
-	// private static ArrayList<double[]> friendRecommendations = new
-	// ArrayList<double[]>(); // Movies
-	// private static ArrayList<double[]> friendsFriendRecommendations;
-	// private static ArrayList<double[]> professionalRecommendations;
+
 	private static ArrayList<Recommendation> recommendations;
 	private static HashSet<Integer> watchedMovies;
-	private static Double[] recommendedMovie; // NOT IMPLEMENTED HOW TO ACQUIRE
-	// private static int genreProfessional;
 
 	public static ArrayList<Recommendation> execute() {
 		recommendations = new ArrayList<Recommendation>();
@@ -40,18 +32,19 @@ public class Advisor {
 				int selectedGenre = getGenreToWatch();
 				populateWatchedMovies(selectedGenre);
 				getRecommendationFromFriend(selectedGenre);
-				if (recommendations.isEmpty() || allRecommendedMoviesAreWatched()) {
+				if (recommendations.isEmpty() || areAllRecommendedMoviesAreWatched()) {
 					// If no non-watched movie is advised by direct friends..
 					getRecommendationFromFriendsOfFriends(selectedGenre);
 					getProfessionalRecommendation(selectedGenre);
 				}
+				removeWatchedMoviesFromRecommendations();
 				Collections.sort(recommendations);
 				return recommendations;
-					// Line to set recommended movie fields
-					// TODO: update quality and prefs in planner(preferably) or
-					// runner, not here
-					// update trust value of the random guy if his movie is
-					// watched.
+				// Line to set recommended movie fields
+				// TODO: update quality and prefs in planner(preferably) or
+				// runner, not here
+				// update trust value of the random guy if his movie is
+				// watched.
 			} else {
 				System.out.println("Error in DB connection");
 			}
@@ -61,6 +54,8 @@ public class Advisor {
 		}
 		return null;
 	}
+
+	
 
 	private static boolean initDB() {
 		try {
@@ -76,13 +71,6 @@ public class Advisor {
 	// the highest averaged genre among the films that was rated higher than 3.5
 	private static int getGenreToWatch() throws SQLException {
 		Statement stmt = dbConnection.createStatement();
-		/*
-		 * String mostPopularGenreQuery= "SELECT GENREID FROM " +
-		 * "(SELECT GENREID, AVG(MOVIERATING) AS AVG_RATING FROM " +
-		 * "MOVIE_RATINGS WHERE MOVIERATING > 3.5 AND USERID = " + USER_ID +
-		 * " GROUP BY GENREID ORDER BY AVG_RATING DESC LIMIT 1) tmp";
-		 */
-		// System.out.println(statement);
 		String averagesQuery = "SELECT GENREID,COUNT(MOVIERATING) FROM "
 				+ "MOVIE_RATINGS WHERE MOVIERATING > 3.5  AND USERID= " + USER_ID + " GROUP BY GENREID;";
 
@@ -104,9 +92,6 @@ public class Advisor {
 			if (result < runningSum) {
 				rs.close();
 				stmt.close();
-				// System.out.println("genre " + i + " result" + result + "
-				// running" + runningSum);
-				// genre = i;
 				return i;
 			}
 			runningSum += weights[i];
@@ -147,11 +132,6 @@ public class Advisor {
 			Recommendation recommendation = new Recommendation(rs.getInt("movie_ratings.movieID"),
 					rs.getInt("movie_ratings.userID"), rs.getDouble("movie_ratings.movieRating"),
 					rs.getDouble("trust.trustValue"), rs.getDouble("watchability"));
-			// friendRecommendation[0] = rs.getDouble("movie_ratings.movieID");
-			// friendRecommendation[1] = rs.getDouble("movie_ratings.userID");
-			// friendRecommendation[2] =
-			// rs.getDouble("movie_ratings.movieRating");
-			// friendRecommendation[3] = rs.getDouble("trust.trustValue");
 			recommendations.add(recommendation);
 		}
 		rs.close();
@@ -169,18 +149,7 @@ public class Advisor {
 				+ "	  (SELECT * " + "      FROM movie_ratings " + "      WHERE movie_ratings.genreID = " + genre + ") "
 				+ "      AS moviesbygenre " + "ON moviesbygenre.userID = friendsfriend.trusteeID; ";
 		ResultSet rs = stmt.executeQuery(friendRecommendationQuery);
-		// friendsFriendRecommendations.clear();
 		while (rs.next()) {
-			// double[] friendsFriendRecommendation = new double[4];
-			// friendsFriendRecommendation[0] =
-			// rs.getDouble("movie_ratings.movieID");
-			// friendsFriendRecommendation[1] =
-			// rs.getDouble("movie_ratings.userID");
-			// friendsFriendRecommendation[2] =
-			// rs.getDouble("movie_ratings.movieRating");
-			// friendsFriendRecommendation[3] =
-			// rs.getDouble("trust.trustValue");
-			// friendsFriendRecommendations.add(friendsFriendRecommendation);
 			Recommendation recommendation = new Recommendation(rs.getInt("movie_ratings.movieID"),
 					rs.getInt("movie_ratings.userID"), rs.getDouble("movie_ratings.movieRating"),
 					rs.getDouble("trust.trustValue"), rs.getDouble("watchability"));
@@ -222,14 +191,6 @@ public class Advisor {
 			ResultSet rs;
 			rs = stmt.executeQuery(professionalRecommendationQuery);
 			while (rs.next()) {
-				// double[] friendsFriendRecommendation = new double[4];
-				// friendsFriendRecommendation[0] =
-				// rs.getDouble("movie_ratings.movieID");
-				// friendsFriendRecommendation[1] = genreProfessional;
-				// friendsFriendRecommendation[2] =
-				// rs.getDouble("movie_ratings.movieRating");
-				// friendsFriendRecommendation[3] = 0.5;
-				// friendsFriendRecommendations.add(friendsFriendRecommendation);
 				int movieID = rs.getInt("movie_ratings.movieID");
 				double movieRating = rs.getDouble("movie_ratings.movieRating");
 				double watchability = movieRating * 0.5 + getAverageRatingOfMovie(movieID) * 0.5;
@@ -258,12 +219,21 @@ public class Advisor {
 		return averageRating;
 	}
 
-	private static boolean allRecommendedMoviesAreWatched() {
+	private static boolean areAllRecommendedMoviesAreWatched() {
 		for (Recommendation recommendation : recommendations) {
 			if (!watchedMovies.contains(recommendation.movieID)) {
 				return false;
 			}
 		}
 		return true;
+	}
+	
+	private static void removeWatchedMoviesFromRecommendations() {
+		for (int i = 0; i < recommendations.size(); i++) {
+			if (watchedMovies.contains(recommendations.get(i).movieID)) {
+				recommendations.remove(i);
+				i--;
+			}
+		}
 	}
 }
