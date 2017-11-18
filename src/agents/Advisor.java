@@ -8,6 +8,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import misc.Recommendation;
@@ -23,17 +24,21 @@ public class Advisor {
 
 	private static ArrayList<Recommendation> recommendations;
 	private static HashSet<Integer> watchedMovies;
-
+	private static HashMap<Integer,Double> movieAverages;
 	public static ArrayList<Recommendation> execute() {
 		recommendations = new ArrayList<Recommendation>();
 		watchedMovies = new HashSet<Integer>();
+		movieAverages = new HashMap<Integer, Double>();
 		try {
 			if (initDB()) {
 				int selectedGenre = getGenreToWatch();
+				generateAverageRatingsOfMovies(selectedGenre);
+				System.out.println("b");
 				populateWatchedMovies(selectedGenre);
-				getRecommendationFromFriend(selectedGenre);
-				if (recommendations.isEmpty() || areAllRecommendedMoviesAreWatched()) {
-					// If no non-watched movie is advised by direct friends..
+				getRecommendationFromFriend(selectedGenre); //Get friends recommendations
+				removeWatchedMoviesFromRecommendations(); // remove watched movies from recommendations
+				if (recommendations.size()<5) { // if recommended movies are less than 5 after removing watched movies
+					System.out.println(selectedGenre);
 					getRecommendationFromFriendsOfFriends(selectedGenre);
 					getProfessionalRecommendation(selectedGenre);
 				}
@@ -50,12 +55,18 @@ public class Advisor {
 			}
 			dbConnection.close();
 		} catch (SQLException sql) {
-			System.out.println("Error in DB connection in methods");
+			//System.out.println("Error in DB connection in methods");
 		}
 		return null;
 	}
 
+	public static ArrayList<Recommendation> getRecommendations(){
+		return recommendations;
+	}
 	
+	public static HashMap<Integer,Double> getMovieAverages(){
+		return movieAverages;
+	}
 
 	private static boolean initDB() {
 		try {
@@ -129,9 +140,12 @@ public class Advisor {
 
 		ResultSet rs = stmt.executeQuery(friendRecommendationQuery);
 		while (rs.next()) {
-			Recommendation recommendation = new Recommendation(rs.getInt("movie_ratings.movieID"),
-					rs.getInt("movie_ratings.userID"), rs.getDouble("movie_ratings.movieRating"),
-					rs.getDouble("trust.trustValue"), rs.getDouble("watchability"));
+			int movieID = rs.getInt("movie_ratings.movieID");
+			int userID = rs.getInt("movie_ratings.userID");
+			double movieRating = rs.getDouble("movie_ratings.movieRating");
+			double userTrust = rs.getDouble("trust.trustValue");
+			double watchability = rs.getDouble("watchability") + (1 - userTrust)*movieAverages.get(movieID);
+			Recommendation recommendation = new Recommendation( movieID , userID, movieRating, userTrust, watchability);
 			recommendations.add(recommendation);
 		}
 		rs.close();
@@ -150,9 +164,12 @@ public class Advisor {
 				+ "      AS moviesbygenre " + "ON moviesbygenre.userID = friendsfriend.trusteeID; ";
 		ResultSet rs = stmt.executeQuery(friendRecommendationQuery);
 		while (rs.next()) {
-			Recommendation recommendation = new Recommendation(rs.getInt("movie_ratings.movieID"),
-					rs.getInt("movie_ratings.userID"), rs.getDouble("movie_ratings.movieRating"),
-					rs.getDouble("trust.trustValue"), rs.getDouble("watchability"));
+			int movieID = rs.getInt("moviesbygenre.movieID");
+			int userID = rs.getInt("moviesbygenre.userID");
+			double movieRating = rs.getDouble("moviesbygenre.movieRating");
+			double userTrust = rs.getDouble("friendsfriend.trustValue");
+			double watchability = rs.getDouble("watchability") + (1 - userTrust)*movieAverages.get(movieID);
+			Recommendation recommendation = new Recommendation( movieID , userID, movieRating, userTrust, watchability);
 			recommendations.add(recommendation);
 		}
 		rs.close();
@@ -193,7 +210,7 @@ public class Advisor {
 			while (rs.next()) {
 				int movieID = rs.getInt("movie_ratings.movieID");
 				double movieRating = rs.getDouble("movie_ratings.movieRating");
-				double watchability = movieRating * 0.5 + getAverageRatingOfMovie(movieID) * 0.5;
+				double watchability = movieRating * 0.5 + movieAverages.get(movieID) * 0.5;
 				Recommendation recommendation = new Recommendation(rs.getInt("movie_ratings.movieID"),
 						genreProfessional, movieRating, 0.5, watchability);
 				recommendations.add(recommendation);
@@ -207,16 +224,20 @@ public class Advisor {
 
 	}
 
-	private static double getAverageRatingOfMovie(int movieID) throws SQLException {
-		Statement stmt = dbConnection.createStatement();
-		String movieAverageQuery = "SELECT AVG(movieRating) as averageRating " + "FROM movie_ratings "
-				+ "WHERE movieID = " + movieID + ";";
-		ResultSet rs = stmt.executeQuery(movieAverageQuery);
-		rs.next();
-		double averageRating = rs.getDouble("averageRating");
-		rs.close();
-		stmt.close();
-		return averageRating;
+	private static void generateAverageRatingsOfMovies(int selectedGenre) throws SQLException {
+		try {
+			Statement stmt = dbConnection.createStatement();
+			String movieAverageQuery = "SELECT movieID, AVG(movieRating) as averageRating FROM movie_ratings WHERE genreID="+selectedGenre+" GROUP BY movieID;";
+			ResultSet rs = stmt.executeQuery(movieAverageQuery);
+			while(rs.next()) {
+				movieAverages.put(rs.getInt("movieID"), rs.getDouble("averageRating"));
+			}
+			rs.close();
+			stmt.close();
+		} catch (SQLException e) {
+			System.out.println("Error in db connection of professional");
+			e.printStackTrace();
+		}
 	}
 
 	private static boolean areAllRecommendedMoviesAreWatched() {

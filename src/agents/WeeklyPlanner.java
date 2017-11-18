@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import misc.Event;
+import misc.MovieEvent;
 import misc.Runner;
 import misc.Utils;
 
@@ -11,6 +12,7 @@ public class WeeklyPlanner {
 	public static int execute(int currDate, int lastObligedDate, int lastObligedEndTime,
 							  ArrayList<ArrayList<Event>> events, HashMap<String, Integer> prefs) {
 		int lastDate = 0;
+		int plannedMoviesNum =0;
 		if(currDate > lastObligedDate)
 			lastDate = currDate + 1;
 		else
@@ -68,7 +70,7 @@ public class WeeklyPlanner {
 															// set of the day
 															// have
 			int pleasure = 0;
-
+			System.out.println(numOfEvents);
 			for (int k = 1; k < caseNum; k++) {
 				ArrayList<Event> tempAccepted = new ArrayList<Event>();
 				int t = k;
@@ -87,6 +89,12 @@ public class WeeklyPlanner {
 								if (tempHours[time]) {
 									brk = true;
 									break;
+								}
+							} 
+							if(e.getClass().getSimpleName().equals("MovieEvent")) {
+								//If movie events have been included in previous days' plans n times, the movie recommendations until the nth recommendation are skipped.
+								if(((MovieEvent)e).getRecommendationNumber() < plannedMoviesNum) {
+									brk = true;
 								}
 							}
 							if (!brk) {
@@ -108,10 +116,17 @@ public class WeeklyPlanner {
 								break;
 							}
 						}
+						if(e.getClass().getSimpleName().equals("MovieEvent")) {
+							//If movie events have been included in previous days' plans n times, the movie recommendations until the nth recommendation are skipped.
+							if(((MovieEvent)e).getRecommendationNumber() < plannedMoviesNum) {
+								brk = true;
+							}
+						}
 						if (!brk) {
 							for (int time = startTime; time < endTime; time++) {
 								tempHours[time] = true;
 							}
+							System.out.println(e.ID);
 							tempPleasure = tempPleasure + e.quality * prefs.get(e.type);
 							tempAccepted.add(e);
 						}
@@ -128,6 +143,11 @@ public class WeeklyPlanner {
 			}
 			acceptedEvents.addAll(obligedEvents);
 			plannedEvents.add(acceptedEvents);
+			for (Event acceptedEvent : acceptedEvents){
+				if(acceptedEvent.getClass().getSimpleName().equals("MovieEvent")) {
+					plannedMoviesNum++;
+				}
+			}
 			for (Event e : acceptedEvents) {
 				if (e.type.equals("return")) {
 					System.out.println();

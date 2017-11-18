@@ -15,20 +15,24 @@ public class Runner {
 	
 	public static void main(String[] args) throws Exception {
 		System.out.println(Advisor.execute());
+		/*
 		int x = 1;
 		if(x == 1){
 			System.exit(1);
 		}
-		Scanner scan = new Scanner(new File("./preferences.tsv"));
-		HashMap<String, Integer> prefs = Utils.readPrefs(scan);
-//		Utils.printPrefs(prefs);
-
-		scan = new Scanner(new File("events.tsv"));
+		*/
+		Scanner scan = new Scanner(new File("events.tsv"));
 		Object[] readEvents = Utils.readEvents(scan);
 		lastObligedDate = (int) readEvents[0];
 		lastObligedEndTime = (int) readEvents[1];
 		@SuppressWarnings("unchecked")
 		ArrayList<ArrayList<Event>> events = (ArrayList<ArrayList<Event>>) readEvents[2];
+		
+		scan = new Scanner(new File("./preferences.tsv"));
+		HashMap<String, Integer> prefs = Utils.readPrefs(scan);
+//		Utils.printPrefs(prefs);
+
+		
 
 		scan = new Scanner(System.in);
 		int returnedDate = 99;

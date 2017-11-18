@@ -2,7 +2,7 @@ package misc;
 
 public class Recommendation implements Comparable<Recommendation> {
 	public int movieID, userID;
-	public double movieRating, trustValue, watchability;
+	public double movieRating, trustValue, watchability, averageRating, quality;
 
 	public Recommendation(int movieID, int userID, double movieRating, double trustValue, double watchability) {
 		this.movieID = movieID;
