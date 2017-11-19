@@ -11,4 +11,9 @@ public class MovieEvent extends Event{
 	public int getRecommendationNumber() {
 		return recommendationNumber;
 	}
+	@Override
+	public String toString() {
+		//+(date+16) + "\t"
+		return type +" " + recommendationNumber+ "\t" + startTime + "-" + endTime + "\t" ;
+	}
 }

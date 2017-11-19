@@ -15,5 +15,10 @@ public class Recommendation implements Comparable<Recommendation> {
 	public int compareTo(Recommendation r) {
 		return Double.compare(watchability, r.watchability);
 	}
+	@Override
+	public String toString() {
+		//+(date+16) + "\t"
+		return movieID + "\t" + movieRating + "\t" + userID + "\t" + trustValue;
+	}
 
 }

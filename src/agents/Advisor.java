@@ -15,7 +15,7 @@ import misc.Recommendation;
 
 public class Advisor {
 
-	private static final int USER_ID = 1;
+	private static final int USER_ID = 4218;
 
 	private static final String DB_URL = "jdbc:mysql://localhost/movie";
 	private static final String DB_USER = "root";
@@ -33,17 +33,18 @@ public class Advisor {
 			if (initDB()) {
 				int selectedGenre = getGenreToWatch();
 				generateAverageRatingsOfMovies(selectedGenre);
-				System.out.println("b");
 				populateWatchedMovies(selectedGenre);
 				getRecommendationFromFriend(selectedGenre); //Get friends recommendations
 				removeWatchedMoviesFromRecommendations(); // remove watched movies from recommendations
 				if (recommendations.size()<5) { // if recommended movies are less than 5 after removing watched movies
-					System.out.println(selectedGenre);
+					//System.out.println(selectedGenre);
 					getRecommendationFromFriendsOfFriends(selectedGenre);
 					getProfessionalRecommendation(selectedGenre);
 				}
 				removeWatchedMoviesFromRecommendations();
 				Collections.sort(recommendations);
+				Collections.reverse(recommendations);
+				userLog();
 				return recommendations;
 				// Line to set recommended movie fields
 				// TODO: update quality and prefs in planner(preferably) or
@@ -85,18 +86,19 @@ public class Advisor {
 		String averagesQuery = "SELECT GENREID,COUNT(MOVIERATING) FROM "
 				+ "MOVIE_RATINGS WHERE MOVIERATING > 3.5  AND USERID= " + USER_ID + " GROUP BY GENREID;";
 
-		double[] weights = new double[17];
+		int[] weights = new int[17];
 		Arrays.fill(weights, 1);
 		double weightSum = 17;
 		ResultSet rs = stmt.executeQuery(averagesQuery);
+		System.out.println("The number of movies the user "+USER_ID+" watched, grouped by their genres:"  );
 		while (rs.next()) {
 			int genreID = (int) rs.getDouble("GENREID");
-			double avgRating = rs.getDouble("COUNT(MOVIERATING)");
-			weights[genreID - 1] = avgRating + 1;
-			weightSum = weightSum + avgRating;
-			System.out.println("Genre: " + genreID + " Rating: " + weights[genreID - 1]);
+			int numOfRatings = rs.getInt("COUNT(MOVIERATING)");
+			weights[genreID - 1] = numOfRatings + 1;
+			weightSum = weightSum + numOfRatings;
+			System.out.println("Genre: " + genreID + "\tNumOfMovies: " + (weights[genreID - 1]-1));
 		}
-		// System.out.println(weightSum);
+		 System.out.println();
 		double result = Math.random() * weightSum;
 		double runningSum = 0;
 		for (int i = 0; i < weights.length; i++) {
@@ -136,7 +138,7 @@ public class Advisor {
 		// No need to ortder by since they will be ordered later
 		String friendRecommendationQuery = "SELECT movie_ratings.movieID, movie_ratings.userID, movie_ratings.movieRating, trust.trustValue, movie_ratings.movieRating*trust.trustValue as Watchability "
 				+ "FROM trust INNER JOIN movie_ratings ON movie_ratings.userID = trust.trusteeID "
-				+ "WHERE trust.trustorID = " + USER_ID + " AND movie_ratings.genreID = " + selectedGenre + ";";
+				+ "WHERE trust.trustorID = " + USER_ID + " AND trust.trustValue>0.5 AND movie_ratings.genreID = " + selectedGenre + ";";
 
 		ResultSet rs = stmt.executeQuery(friendRecommendationQuery);
 		while (rs.next()) {
@@ -157,9 +159,9 @@ public class Advisor {
 		// No need for order by since they will be ordered later.
 		String friendRecommendationQuery = "SELECT moviesbygenre.movieID, moviesbygenre.userID, moviesbygenre.movieRating, friendsfriend.trustValue, moviesbygenre.movieRating*friendsfriend.trustValue as Watchability "
 				+ "FROM (SELECT friends.trusteeID as trusteeID, me.trustValue*friends.trustValue as trustValue "
-				+ "	   FROM (SELECT * FROM trust WHERE trust.trustorID = " + USER_ID + ") as me "
+				+ "	   FROM (SELECT * FROM trust WHERE trust.trustorID = " + USER_ID + " AND trustValue > 0.5) as me "
 				+ "		     INNER JOIN " + "            trust as friends "
-				+ "	   WHERE me.trusteeID = friends.trustorID) " + "	   AS friendsfriend " + "	   INNER JOIN "
+				+ "	   WHERE me.trusteeID = friends.trustorID AND friends.trustValue>0.5) " + "	   AS friendsfriend " + "	   INNER JOIN "
 				+ "	  (SELECT * " + "      FROM movie_ratings " + "      WHERE movie_ratings.genreID = " + genre + ") "
 				+ "      AS moviesbygenre " + "ON moviesbygenre.userID = friendsfriend.trusteeID; ";
 		ResultSet rs = stmt.executeQuery(friendRecommendationQuery);
@@ -255,6 +257,48 @@ public class Advisor {
 				recommendations.remove(i);
 				i--;
 			}
+		}
+	}
+	private static void userLog() {
+		System.out.println("The five recommendations we provide to you dear user "+USER_ID+":");
+		System.out.println("movieID" + "\t" + "mRating" + " " + "userID" + "\t" + "trustValue");
+		for (int i=0; i<5; i++) {
+			System.out.println(recommendations.get(i));
+		}
+		System.out.println();
+	}
+	
+	public static void updateUserTrust(Recommendation r, int userRating) {
+		double trust = r.trustValue;
+		int trusteeID = r.userID;
+		double trusteeRating = r.movieRating;
+		double averageRating = movieAverages.get(r.movieID);
+		if(Math.abs(trusteeRating - userRating)<Math.abs(averageRating - userRating)) {
+			trust = trust + trust*(1-Math.abs(trusteeRating - userRating)/5);
+		}
+		try {
+			Statement stmt = dbConnection.createStatement();
+			String trustCheck = "SELECT * FROM trust WHERE trustorID="+USER_ID+" AND trusteeID=" +trusteeID+";";
+			ResultSet rs = stmt.executeQuery(trustCheck);
+			if(rs.next()) {//If there is a relation between this user and recommended user
+				String updateTrust = "UPDATE trust SET trustValue="+trust+"WHERE trustorID="+USER_ID+" AND trusteeID="+trusteeID+";";
+				stmt.executeUpdate(updateTrust);
+			}else {
+				String insertTrust = "INSERT INTO trust (trustorID, trusteeID, trustValue) VALUES ("+USER_ID+", "+trusteeID+", "+trust+");";
+				stmt.executeUpdate(insertTrust);
+			}
+			System.out.println("Your updated friends list:");
+			System.out.println("UserID\tTrustValue");
+			String friends = "SELECT trusteeID, trustValue FROM trust WHERE trustorID = "+USER_ID+";";
+			rs = stmt.executeQuery(friends);
+			while(rs.next())
+				System.out.println(rs.getInt("trusteeID")+"\t"+rs.getDouble("trustValue"));
+			System.out.println();
+			rs.close();
+			stmt.close();
+		} catch (SQLException e) {
+			System.out.println("Error in db connection of updatingTrust");
+			e.printStackTrace();
 		}
 	}
 }

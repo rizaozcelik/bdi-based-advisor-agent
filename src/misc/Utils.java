@@ -90,7 +90,7 @@ public class Utils {
 		for(int k=0; k<lastDate + 1; k++) {
 			for(int i=0; i<lastDate + 1; i++) {
 				Recommendation ithRec = recommendations.get(i);
-				MovieEvent m = new MovieEvent(greatestID+1+i+k*5, "Movie"+i, k, "19-21",(int)(movieAverages.get(ithRec.movieID)*20), false, i);
+				MovieEvent m = new MovieEvent(greatestID+1+i+k*(lastDate+1), "movie", k, "19-21",(int)(movieAverages.get(ithRec.movieID)*20), false, i);
 				events.get(k).add(m);
 			}
 		}
@@ -104,9 +104,12 @@ public class Utils {
 			String[] line = scan.nextLine().split("\t");
 			prefs.put(line[0].toLowerCase(), Integer.parseInt(line[1]));
 		}
-		for(int i=0; i<Utils.lastDate; i++) {
-			prefs.put("Movie"+i, (int)(recommendations.get(i).watchability*20));
-		}
+		/*UNUSED
+		 * 
+		for(int i=0; i<Utils.lastDate + 1; i++) {
+			System.out.println(recommendations.get(i).watchability);
+			prefs.put("Movie" (int)(recommendations.get(i).watchability*20));
+		}*/
 		return prefs;
 	}
 	
