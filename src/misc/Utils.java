@@ -104,7 +104,7 @@ public class Utils {
 			String[] line = scan.nextLine().split("\t");
 			prefs.put(line[0].toLowerCase(), Integer.parseInt(line[1]));
 		}
-		for(int i=0; i<Utils.lastDate; i++) {
+		for(int i=0; i<Utils.lastDate + 1; i++) {
 			prefs.put("Movie"+i, (int)(recommendations.get(i).watchability*20));
 		}
 		return prefs;

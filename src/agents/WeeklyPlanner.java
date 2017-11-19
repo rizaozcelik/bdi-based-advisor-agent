@@ -127,6 +127,9 @@ public class WeeklyPlanner {
 								tempHours[time] = true;
 							}
 							System.out.println(e.ID);
+							System.out.println(e.type);
+							System.out.println(e.quality);
+							Utils.printPrefs(prefs);
 							tempPleasure = tempPleasure + e.quality * prefs.get(e.type);
 							tempAccepted.add(e);
 						}
