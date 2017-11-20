@@ -90,7 +90,7 @@ public class Utils {
 		for(int k=0; k<lastDate + 1; k++) {
 			for(int i=0; i<lastDate + 1; i++) {
 				Recommendation ithRec = recommendations.get(i);
-				MovieEvent m = new MovieEvent(greatestID+1+i+k*(lastDate+1), "movie", k, "19-21",(int)(movieAverages.get(ithRec.movieID)*20), false, i);
+				MovieEvent m = new MovieEvent(greatestID+1+i+k*(lastDate+1), "movie", k, "19-21",(int)(movieAverages.get(ithRec.movieID)*20), false, i, ithRec.movieID);
 				events.get(k).add(m);
 			}
 		}

@@ -16,12 +16,13 @@ import misc.Recommendation;
 public class Advisor {
 
 	private static final int USER_ID = 4218;
-
+	//private static final int USER_ID = 1;
+	
 	private static final String DB_URL = "jdbc:mysql://localhost/movie";
 	private static final String DB_USER = "root";
 	private static final String DB_PASSWORD = "12345";
 	private static Connection dbConnection;
-
+	private static int selectedGenre;
 	private static ArrayList<Recommendation> recommendations;
 	private static HashSet<Integer> watchedMovies;
 	private static HashMap<Integer,Double> movieAverages;
@@ -31,16 +32,19 @@ public class Advisor {
 		movieAverages = new HashMap<Integer, Double>();
 		try {
 			if (initDB()) {
-				int selectedGenre = getGenreToWatch();
+				selectedGenre = getGenreToWatch();
+				selectedGenre = 14;
 				generateAverageRatingsOfMovies(selectedGenre);
 				populateWatchedMovies(selectedGenre);
+				System.out.println("Going to ask your friends for movie recommendations.");
 				getRecommendationFromFriend(selectedGenre); //Get friends recommendations
 				removeWatchedMoviesFromRecommendations(); // remove watched movies from recommendations
-				if (recommendations.size()<5) { // if recommended movies are less than 5 after removing watched movies
-					//System.out.println(selectedGenre);
+				if (recommendations.size()<6) { // if recommended movies are less than 5 after removing watched movies
+					System.out.println("Your friends didn't recommend enough movies. Going to ask your friends of friends and to the genre expert. ");
 					getRecommendationFromFriendsOfFriends(selectedGenre);
 					getProfessionalRecommendation(selectedGenre);
 				}
+				System.out.println();
 				removeWatchedMoviesFromRecommendations();
 				Collections.sort(recommendations);
 				Collections.reverse(recommendations);
@@ -260,9 +264,9 @@ public class Advisor {
 		}
 	}
 	private static void userLog() {
-		System.out.println("The five recommendations we provide to you dear user "+USER_ID+":");
+		System.out.println("The six recommendations we provide to you dear user "+USER_ID+":");
 		System.out.println("movieID" + "\t" + "mRating" + " " + "userID" + "\t" + "trustValue");
-		for (int i=0; i<5; i++) {
+		for (int i=0; i<6; i++) {
 			System.out.println(recommendations.get(i));
 		}
 		System.out.println();
@@ -275,6 +279,8 @@ public class Advisor {
 		double averageRating = movieAverages.get(r.movieID);
 		if(Math.abs(trusteeRating - userRating)<Math.abs(averageRating - userRating)) {
 			trust = trust + trust*(1-Math.abs(trusteeRating - userRating)/5);
+		}else {
+			trust = trust - trust*(Math.abs(trusteeRating - userRating)/5);
 		}
 		try {
 			Statement stmt = dbConnection.createStatement();
@@ -287,12 +293,14 @@ public class Advisor {
 				String insertTrust = "INSERT INTO trust (trustorID, trusteeID, trustValue) VALUES ("+USER_ID+", "+trusteeID+", "+trust+");";
 				stmt.executeUpdate(insertTrust);
 			}
+			String insertMovie = "INSERT INTO movie_ratings (userID, movieID, genreID, movieRating) VALUES ("+USER_ID+", "+r.movieID+", "+selectedGenre+", "+userRating+");";
+			stmt.executeUpdate(insertMovie);
 			System.out.println("Your updated friends list:");
 			System.out.println("UserID\tTrustValue");
 			String friends = "SELECT trusteeID, trustValue FROM trust WHERE trustorID = "+USER_ID+";";
 			rs = stmt.executeQuery(friends);
-			while(rs.next())
-				System.out.println(rs.getInt("trusteeID")+"\t"+rs.getDouble("trustValue"));
+			//while(rs.next())
+			//	System.out.println(rs.getInt("trusteeID")+"\t"+rs.getDouble("trustValue"));
 			System.out.println();
 			rs.close();
 			stmt.close();

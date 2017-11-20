@@ -30,14 +30,16 @@ public class Runner {
 
 		scan = new Scanner(System.in);
 		int returnedDate = 99;
+		int watchedMoviesNum =0;
 		// Day Iterator
 		for (int i = 0; i < PLANNED_DAY_COUNT && (i < returnedDate+1); i++) {
 			System.out.println("Good Morning!");
 			System.out.println("Today is July " + (i + 16) + "\nHere is your program for following days");
-			Object[] temp = WeeklyPlanner.execute(i, lastObligedDate, lastObligedEndTime, events, prefs);
+			Object[] temp = WeeklyPlanner.execute(i, lastObligedDate, lastObligedEndTime, events, prefs, watchedMoviesNum);
 			returnedDate = (int)temp[0];
 			boolean isMovieWatched = (boolean)temp[1];
 			int recNum = (int) temp[2];
+			watchedMoviesNum = (int)temp[3];
 			System.out.println("Choose one to continue: \n"
 					+ "0: No action\n"
 					+ "1: Add Event\n"
