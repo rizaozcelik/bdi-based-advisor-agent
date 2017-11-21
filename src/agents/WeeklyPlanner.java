@@ -9,10 +9,10 @@ import misc.Utils;
 
 public class WeeklyPlanner {
 	public static ArrayList<Event> erasedReturns = new ArrayList<Event>();
-	public static int execute(int currDate, int lastObligedDate, int lastObligedEndTime,
-							  ArrayList<ArrayList<Event>> events, HashMap<String, Integer> prefs) {
+	public static Object[] execute(int currDate, int lastObligedDate, int lastObligedEndTime,
+							  ArrayList<ArrayList<Event>> events, HashMap<String, Integer> prefs,int watchedMoviesNum) {
 		int lastDate = 0;
-		int plannedMoviesNum =0;
+		int plannedMoviesNum =watchedMoviesNum;
 		if(currDate > lastObligedDate)
 			lastDate = currDate + 1;
 		else
@@ -61,8 +61,6 @@ public class WeeklyPlanner {
 			}
 			
 			
-			
-
 			int numOfEvents = daysEvents.size(); // Number of events in the
 													// selected day
 			int caseNum = (int) Math.pow(2, numOfEvents); // Number of subsets
@@ -70,7 +68,6 @@ public class WeeklyPlanner {
 															// set of the day
 															// have
 			int pleasure = 0;
-			System.out.println(numOfEvents);
 			for (int k = 1; k < caseNum; k++) {
 				ArrayList<Event> tempAccepted = new ArrayList<Event>();
 				int t = k;
@@ -126,10 +123,7 @@ public class WeeklyPlanner {
 							for (int time = startTime; time < endTime; time++) {
 								tempHours[time] = true;
 							}
-							System.out.println(e.ID);
-							System.out.println(e.type);
-							System.out.println(e.quality);
-							Utils.printPrefs(prefs);
+							//System.out.println(e.type);
 							tempPleasure = tempPleasure + e.quality * prefs.get(e.type);
 							tempAccepted.add(e);
 						}
@@ -153,9 +147,19 @@ public class WeeklyPlanner {
 			}
 			for (Event e : acceptedEvents) {
 				if (e.type.equals("return")) {
+					boolean isMovieWatched = false;
+					int recommendationNum = 0;
+					int watchedMovies = watchedMoviesNum;
 					System.out.println();
 					Utils.printEvents(plannedEvents);
-					return e.date;
+					for(Event k: plannedEvents.get(0)){
+						if(k.getClass().getSimpleName().equals("MovieEvent")){
+							isMovieWatched = true;
+							recommendationNum = ((MovieEvent)k).getRecommendationNumber();
+							watchedMovies++;
+						}
+					}
+					return new Object[]{e.date,isMovieWatched,recommendationNum,watchedMovies};
 				}
 			}
 			if(l == lastDate-1) {
@@ -163,8 +167,18 @@ public class WeeklyPlanner {
 			}
 		}
 		// At this point times for events are taken should print the plan
-		System.out.println();
+		System.out.println("");
 		Utils.printEvents(plannedEvents);
-		return 21;
+		boolean isMovieWatched = false;
+		int recommendationNum = 0;
+		int watchedMovies = watchedMoviesNum;
+		for(Event e: plannedEvents.get(0)){
+			if(e.getClass().getSimpleName().equals("MovieEvent")){
+				isMovieWatched = true;
+				recommendationNum = ((MovieEvent)e).getRecommendationNumber();
+				watchedMovies++;
+			}
+		}
+		return new Object[]{21,isMovieWatched,recommendationNum,watchedMovies};
 	}
 }
