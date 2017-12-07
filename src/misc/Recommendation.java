@@ -13,14 +13,16 @@ public class Recommendation implements Comparable<Recommendation> {
 		this.trustValue = trustValue;
 		this.watchability = watchability;
 	}
+
 	@Override
 	public int compareTo(Recommendation r) {
-		return Double.compare(watchability, r.watchability);
+		return Double.compare(r.watchability, watchability);
 	}
+
 	@Override
 	public String toString() {
 		DecimalFormat df = new DecimalFormat("#.##");
-		//+(date+16) + "\t"
+		// +(date+16) + "\t"
 		return movieID + "\t" + movieRating + "\t" + userID + "\t" + df.format(trustValue);
 	}
 

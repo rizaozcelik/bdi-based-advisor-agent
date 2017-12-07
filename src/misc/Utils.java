@@ -1,16 +1,17 @@
 package misc;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
-import agents.Advisor;
-
-import java.util.Map.Entry;
+import agents.MovieAdvisor;
 
 public class Utils {
 	public static ArrayList<Event> allObligedEvents = new ArrayList<Event>();
-	private static int lastDate;
+//	private static int lastDate;
+
 	public static void printEvents(ArrayList<ArrayList<Event>> events) {
 		// System.out.println(header);
 		for (ArrayList<Event> daily : events) {
@@ -43,7 +44,7 @@ public class Utils {
 
 	}
 
-	public static Object[] readEvents(Scanner scan) {
+	public static Object[] readEvents(Scanner scan, MovieAdvisor advisor) {
 		scan.nextLine();
 		ArrayList<ArrayList<Event>> events = new ArrayList<ArrayList<Event>>();
 		for (int i = 0; i < Runner.PLANNED_DAY_COUNT; i++) {
@@ -57,7 +58,7 @@ public class Utils {
 			String[] line = scan.nextLine().split("\t");
 			// Store date as 0,1,2...
 			int eventID = Integer.parseInt(line[0]);
-			if(eventID > greatestID) {
+			if (eventID > greatestID) {
 				greatestID = eventID;
 			}
 			Event event = new Event(eventID, line[1].toLowerCase(), Integer.parseInt(line[2]) - 16,
@@ -77,42 +78,37 @@ public class Utils {
 			}
 			events.get(lastDate).add(event);
 		}
-		Utils.lastDate = lastDate;
-		addMovies(lastDate, greatestID, events);
-		
+//		Utils.lastDate = lastDate;
+		addMovies(lastDate, greatestID, events, advisor);
+
 		scan.close();
 		return new Object[] { lastObligedDate, lastObligedEndTime, events };
 	}
-	//Adds recommended movies to each days event list
-	private static void addMovies(int lastDate, int greatestID, ArrayList<ArrayList<Event>> events) {
-		ArrayList<Recommendation> recommendations = Advisor.getRecommendations();
-		HashMap<Integer, Double> movieAverages = Advisor.getMovieAverages();
-		for(int k=0; k<lastDate + 1; k++) {
-			for(int i=0; i<lastDate + 1; i++) {
+
+	// Adds recommended movies to each days event list
+	private static void addMovies(int lastDate, int greatestID, ArrayList<ArrayList<Event>> events, MovieAdvisor advisor) {
+		ArrayList<Recommendation> recommendations = advisor.getRecommendations();
+		HashMap<Integer, Double> movieAverages = advisor.getMovieAverages();
+		for (int k = 0; k < lastDate + 1; k++) {
+			for (int i = 0; i < lastDate + 1; i++) {
 				Recommendation ithRec = recommendations.get(i);
-				MovieEvent m = new MovieEvent(greatestID+1+i+k*(lastDate+1), "movie", k, "19-21",(int)(movieAverages.get(ithRec.movieID)*20), false, i, ithRec.movieID);
+				MovieEvent m = new MovieEvent(greatestID + 1 + i + k * (lastDate + 1), "movie", k, "19-21",
+						(int) (movieAverages.get(ithRec.movieID) * 20), false, i, ithRec.movieID);
 				events.get(k).add(m);
 			}
 		}
 	}
-	
+
 	public static HashMap<String, Integer> readPrefs(Scanner scan) {
 		HashMap<String, Integer> prefs = new HashMap<String, Integer>();
-		ArrayList<Recommendation> recommendations = Advisor.getRecommendations(); // Required for preferences of movies
 		scan.nextLine();
 		while (scan.hasNextLine()) {
 			String[] line = scan.nextLine().split("\t");
 			prefs.put(line[0].toLowerCase(), Integer.parseInt(line[1]));
 		}
-		/*UNUSED
-		 * 
-		for(int i=0; i<Utils.lastDate + 1; i++) {
-			System.out.println(recommendations.get(i).watchability);
-			prefs.put("Movie" (int)(recommendations.get(i).watchability*20));
-		}*/
 		return prefs;
 	}
-	
+
 	public static void updatePref(Scanner scan, HashMap<String, Integer> prefs) {
 		String choice = "";
 		while (!choice.equals("q")) {
@@ -220,8 +216,8 @@ public class Utils {
 				}
 
 			}
-		System.out.println("Type q to quit, c to continue");
-		choice = scan.next();
+			System.out.println("Type q to quit, c to continue");
+			choice = scan.next();
 		}
 	}
 
