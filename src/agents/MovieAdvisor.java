@@ -11,9 +11,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import javax.annotation.PreDestroy;
-import javax.swing.text.html.HTMLDocument.HTMLReader.PreAction;
-
 import misc.Recommendation;
 
 public class MovieAdvisor {

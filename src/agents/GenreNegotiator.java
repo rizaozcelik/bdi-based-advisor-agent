@@ -19,6 +19,9 @@ public class GenreNegotiator extends Negotiator {
 			// this is the first round.
 			return null;
 		}
+		// dummy line
+		if (genres == null)
+			return null;
 		return null;
 	}
 
@@ -27,7 +30,6 @@ public class GenreNegotiator extends Negotiator {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public double computePersonalUtility(int typeID) {

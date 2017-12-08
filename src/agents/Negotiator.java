@@ -2,7 +2,6 @@ package agents;
 
 import misc.Offer;
 import misc.OfferResponse;
-import misc.ResponseType;
 
 public abstract class Negotiator {
 	protected int agentID, acceptanceParameter;

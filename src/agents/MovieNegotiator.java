@@ -24,6 +24,8 @@ public class MovieNegotiator extends Negotiator {
 			// this is the first round.
 			return null;
 		}
+		// dummy line
+		if(recommendations == null) return null;
 		return null;
 	}
 

@@ -25,6 +25,7 @@ public class Runner {
 		ArrayList<Recommendation> recommendations4218 = advisor4218.execute();
 		MovieAdvisor advisor1 = new MovieAdvisor(1);
 		ArrayList<Recommendation> recommendations1 = advisor1.execute();
+		Negotiator neg1 = new MovieNegotiator(1, 1, recommendations1);
 		// for(Recommendation r : recommendations1){
 		// System.out.println(r);
 		// }
@@ -33,6 +34,12 @@ public class Runner {
 		// }
 		Negotiator neg4218 = new MovieNegotiator(4218, 1, recommendations4218);
 		neg4218.evaluate(new Offer(1, 1, 79, 0, ResponseType.Reject));
+		ArrayList<Negotiator> negotiators = new ArrayList<Negotiator>();
+		negotiators.add(neg4218);
+		negotiators.add(neg1);
+		Bazaar bazaar = new Bazaar(true, negotiators);
+		bazaar.runNegotiation();
+		
 		Scanner scan = new Scanner(new File("events.tsv"));
 		Object[] readEvents = Utils.readEvents(scan, advisor);
 		lastObligedDate = (int) readEvents[0];
