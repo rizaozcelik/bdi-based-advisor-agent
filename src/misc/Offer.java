@@ -1,13 +1,12 @@
 package misc;
 
-public class MovieOffer {
-	private int owner, genre, movieID, ownerUtility;
+public class Offer {
+	private int owner, typeID, ownerUtility;
 	private OfferResponse response;
-	
-	public MovieOffer(int owner, int genre, int movieID, int ownerUtility, OfferResponse response) {
+
+	public Offer(int owner, int genre, int typeID, int ownerUtility, OfferResponse response) {
 		this.owner = owner;
-		this.genre = genre;
-		this.movieID = movieID;
+		this.typeID = typeID;
 		this.ownerUtility = ownerUtility;
 		this.response = response;
 	}
@@ -28,20 +27,12 @@ public class MovieOffer {
 		this.owner = owner;
 	}
 
-	public int getGenre() {
-		return genre;
+	public int getTypeID() {
+		return typeID;
 	}
 
-	public void setGenre(int genre) {
-		this.genre = genre;
-	}
-
-	public int getMovieID() {
-		return movieID;
-	}
-
-	public void setMovieID(int movieID) {
-		this.movieID = movieID;
+	public void setMovieID(int typeID) {
+		this.typeID = typeID;
 	}
 
 	public int getOwnerUtility() {
@@ -51,5 +42,5 @@ public class MovieOffer {
 	public void setOwnerUtility(int ownerUtility) {
 		this.ownerUtility = ownerUtility;
 	}
-	
+
 }

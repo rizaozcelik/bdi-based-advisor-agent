@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 import agents.MovieAdvisor;
+import agents.MovieNegotiator;
 import agents.Negotiator;
 import agents.WeeklyPlanner;
 
@@ -22,16 +23,16 @@ public class Runner {
 		MovieAdvisor advisor = advisor4218;
 
 		ArrayList<Recommendation> recommendations4218 = advisor4218.execute();
-		MovieAdvisor advisor1 = new MovieAdvisor(1);		
+		MovieAdvisor advisor1 = new MovieAdvisor(1);
 		ArrayList<Recommendation> recommendations1 = advisor1.execute();
-//		for(Recommendation r : recommendations1){
-//			System.out.println(r);
-//		}
-//		for(Recommendation r : recommendations4218){
-//			System.out.println(r);
-//		}
-		Negotiator neg4218 = new Negotiator(recommendations4218, 4218);
-		neg4218.evaluate(new MovieOffer(1, 1, 79, 0, OfferResponse.Reject));
+		// for(Recommendation r : recommendations1){
+		// System.out.println(r);
+		// }
+		// for(Recommendation r : recommendations4218){
+		// System.out.println(r);
+		// }
+		Negotiator neg4218 = new MovieNegotiator(4218, 1, recommendations4218);
+		neg4218.evaluate(new Offer(1, 1, 79, 0, OfferResponse.Reject));
 		Scanner scan = new Scanner(new File("events.tsv"));
 		Object[] readEvents = Utils.readEvents(scan, advisor);
 		lastObligedDate = (int) readEvents[0];
