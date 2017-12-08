@@ -40,8 +40,8 @@ public class Bazaar {
 					totalUtility += currentOffer.getOwnerUtility();
 				}
 			}
-
-			accepted = acceptanceCount >= numberOfNegotiators / 2;
+			//SHOULD CHANGE AT LEAST NEEDS TO BE HALF + 1. 
+			accepted = acceptanceCount >= (numberOfNegotiators / 2)+1;
 			if (totalUtility > maximumTotalUtility) {
 				maximumTotalUtility = totalUtility;
 				bestOffer = currentOffer;
@@ -49,7 +49,7 @@ public class Bazaar {
 			round++;
 		}
 
-		if (currentOffer.getResponse() == ResponseType.Accept) {
+		if (accepted) {
 			return currentOffer.getTypeID();
 		} else if (forceAgreement) {
 			return bestOffer.getTypeID();

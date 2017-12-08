@@ -33,7 +33,7 @@ public class Runner {
 		// System.out.println(r);
 		// }
 		Negotiator neg4218 = new MovieNegotiator(4218, 1, recommendations4218);
-		neg4218.evaluate(new Offer(1, 1, 79, 0, ResponseType.Reject));
+		neg4218.evaluate(new Offer(1,79, 0));
 		ArrayList<Negotiator> negotiators = new ArrayList<Negotiator>();
 		negotiators.add(neg4218);
 		negotiators.add(neg1);

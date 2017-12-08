@@ -9,13 +9,15 @@ import java.util.ArrayList;
 import misc.Offer;
 import misc.OfferResponse;
 import misc.Recommendation;
+import misc.ResponseType;
 
 public class MovieNegotiator extends Negotiator {
 	private ArrayList<Recommendation> recommendations;
-
+	private int numberOfProposes;
 	public MovieNegotiator(int agentID, int acceptanceParameter, ArrayList<Recommendation> recommendations) {
 		super(agentID, acceptanceParameter);
 		this.recommendations = recommendations;
+		numberOfProposes = 0;
 	}
 
 	@Override
@@ -24,19 +26,38 @@ public class MovieNegotiator extends Negotiator {
 			// this is the first round.
 			return null;
 		}
+		int offeredMovieID = receivedOffer.getTypeID();
+		double utility = computePersonalUtility(offeredMovieID);
+		int i = 0;
+		for(Recommendation rec: recommendations) {
+			if(rec.watchability > utility) {
+				i++;
+			}
+		}
+		OfferResponse offer;
+		if(i<acceptanceParameter) {
+			offer = new OfferResponse(ResponseType.Accept, utility);
+		}else {
+			offer = new OfferResponse(ResponseType.Reject, utility);
+		}
 		// dummy line
 		if(recommendations == null) return null;
-		return null;
+		return offer;
 	}
 
 	@Override
 	public Offer proposeOffer() {
 		// TODO Auto-generated method stub
-		return null;
+		Recommendation offeredRecommendation = recommendations.get(numberOfProposes);
+		int movieID = offeredRecommendation.movieID;
+		double utility = offeredRecommendation.watchability;
+		Offer offer = new Offer(this.agentID,movieID,utility); //RESPONSE TYPE IS NOT REQUIRED FOR OFFER
+		numberOfProposes++;
+		return offer;
 	}
 
 	@Override
-	public double computePersonalUtility(int typeID) {
+	public double computePersonalUtility(int movieID) {
 		final String DB_URL = "jdbc:mysql://localhost/movie";
 		final String DB_USER = "root";
 		final String DB_PASSWORD = "12345";
@@ -53,7 +74,7 @@ public class MovieNegotiator extends Negotiator {
 			try {
 				Statement stmt = dbConnection.createStatement();
 				String friendsRatingQuery = "SELECT movie_ratings.movieRating, trust.trustValue FROM movie_ratings "
-						+ " INNER JOIN trust ON movie_ratings.userID = trust.trusteeID WHERE movieID = " + typeID
+						+ " INNER JOIN trust ON movie_ratings.userID = trust.trusteeID WHERE movieID = " + movieID
 						+ " AND trustorID = " + agentID + " ORDER BY movieRating * trustValue DESC LIMIT 1;";
 				ResultSet rs = stmt.executeQuery(friendsRatingQuery);
 				int friendsRating = 0;
@@ -64,7 +85,7 @@ public class MovieNegotiator extends Negotiator {
 				}
 				System.out.println("balfaldfla");
 				String getMovieAvgQuery = "SELECT AVG(movieRating) AS average FROM movie_ratings WHERE movieID = "
-						+ typeID;
+						+ movieID;
 				rs = stmt.executeQuery(getMovieAvgQuery);
 				while (rs.next()) {
 					averageRating = rs.getDouble("average");

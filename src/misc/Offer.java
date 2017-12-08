@@ -1,22 +1,14 @@
 package misc;
 
 public class Offer {
-	private int owner, typeID, ownerUtility;
-	private ResponseType response;
-
-	public Offer(int owner, int genre, int typeID, int ownerUtility, ResponseType response) {
+	private int owner;
+	private double ownerUtility;
+	private int typeID; // The id of the genre or the movie
+	
+	public Offer(int owner, int typeID, double ownerUtility) { //ERASED RESPONSE SHOULDN'T NEED IT.?
 		this.owner = owner;
-		this.typeID = typeID;
 		this.ownerUtility = ownerUtility;
-		this.response = response;
-	}
-
-	public ResponseType getResponse() {
-		return response;
-	}
-
-	public void setResponse(ResponseType response) {
-		this.response = response;
+		this.typeID = typeID;
 	}
 
 	public int getOwner() {
@@ -27,20 +19,20 @@ public class Offer {
 		this.owner = owner;
 	}
 
+	public double getOwnerUtility() {
+		return ownerUtility;
+	}
+
+	public void setOwnerUtility(double ownerUtility) {
+		this.ownerUtility = ownerUtility;
+	}
+
 	public int getTypeID() {
 		return typeID;
 	}
 
-	public void setMovieID(int typeID) {
+	public void setTypeID(int typeID) {
 		this.typeID = typeID;
-	}
-
-	public int getOwnerUtility() {
-		return ownerUtility;
-	}
-
-	public void setOwnerUtility(int ownerUtility) {
-		this.ownerUtility = ownerUtility;
 	}
 
 }
