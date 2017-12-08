@@ -11,6 +11,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import javax.annotation.PreDestroy;
+import javax.swing.text.html.HTMLDocument.HTMLReader.PreAction;
+
 import misc.Recommendation;
 
 public class MovieAdvisor {
@@ -20,23 +23,37 @@ public class MovieAdvisor {
 	private static final String DB_PASSWORD = "12345";
 	private static Connection dbConnection;
 
-	private int userID, selectedGenre;
+	private int userID, selectedGenre, preDeterminedGenre;
 	private ArrayList<Recommendation> recommendations;
 	private HashSet<Integer> watchedMovies;
 	private HashMap<Integer, Double> movieAverages;
 
 	public MovieAdvisor(int userID) {
 		this.userID = userID;
-		recommendations = new ArrayList<Recommendation>();
-		watchedMovies = new HashSet<Integer>();
-		movieAverages = new HashMap<Integer, Double>();
+		preDeterminedGenre = -1;
+		this.recommendations = new ArrayList<Recommendation>();
+		this.watchedMovies = new HashSet<Integer>();
+		this.movieAverages = new HashMap<Integer, Double>();
+	}
+
+	public MovieAdvisor(int userID, int preDeterminedGenre) {
+		this.userID = userID;
+		this.preDeterminedGenre = preDeterminedGenre;
+		this.recommendations = new ArrayList<Recommendation>();
+		this.watchedMovies = new HashSet<Integer>();
+		this.movieAverages = new HashMap<Integer, Double>();
 	}
 
 	public ArrayList<Recommendation> execute() {
 		try {
 			if (initDB()) {
-				selectedGenre = getGenreToWatch();
-				 selectedGenre = 14;
+				if (preDeterminedGenre == -1) {
+					selectedGenre = getGenreToWatch();
+				} else {
+					selectedGenre = preDeterminedGenre;
+				}
+				// Demo purposes
+				selectedGenre = 14;
 				generateAverageRatingsOfMovies(selectedGenre);
 				populateWatchedMovies(selectedGenre);
 				System.out.println("Going to ask your friends for movie recommendations.");
@@ -251,14 +268,14 @@ public class MovieAdvisor {
 		}
 	}
 
-//	private boolean areAllRecommendedMoviesAreWatched() {
-//		for (Recommendation recommendation : recommendations) {
-//			if (!watchedMovies.contains(recommendation.movieID)) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
+	// private boolean areAllRecommendedMoviesAreWatched() {
+	// for (Recommendation recommendation : recommendations) {
+	// if (!watchedMovies.contains(recommendation.movieID)) {
+	// return false;
+	// }
+	// }
+	// return true;
+	// }
 
 	private void removeWatchedMoviesFromRecommendations() {
 		for (int i = 0; i < recommendations.size(); i++) {

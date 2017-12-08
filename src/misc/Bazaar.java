@@ -1,7 +1,5 @@
 package misc;
 
-import com.sun.org.apache.regexp.internal.recompile;
-
 import agents.Negotiator;
 
 public class Bazaar {
