@@ -1,7 +1,8 @@
 package agents;
 
-
 import misc.Offer;
+import misc.OfferResponse;
+import misc.ResponseType;
 
 public abstract class Negotiator {
 	protected int agentID, acceptanceParameter;
@@ -10,9 +11,11 @@ public abstract class Negotiator {
 		this.agentID = agentID;
 		this.acceptanceParameter = acceptanceParameter;
 	}
-	abstract public Offer evaluate(Offer receivedOffer);
-	abstract Offer acceptOffer();
-	abstract Offer rejectOffer();
+
+	abstract public OfferResponse evaluate(Offer receivedOffer);
+
+	abstract public Offer proposeOffer();
+
 	abstract public double computePersonalUtility(int typeID);
-		
+
 }

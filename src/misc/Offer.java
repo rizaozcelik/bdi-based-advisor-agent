@@ -2,20 +2,20 @@ package misc;
 
 public class Offer {
 	private int owner, typeID, ownerUtility;
-	private OfferResponse response;
+	private ResponseType response;
 
-	public Offer(int owner, int genre, int typeID, int ownerUtility, OfferResponse response) {
+	public Offer(int owner, int genre, int typeID, int ownerUtility, ResponseType response) {
 		this.owner = owner;
 		this.typeID = typeID;
 		this.ownerUtility = ownerUtility;
 		this.response = response;
 	}
 
-	public OfferResponse getResponse() {
+	public ResponseType getResponse() {
 		return response;
 	}
 
-	public void setResponse(OfferResponse response) {
+	public void setResponse(ResponseType response) {
 		this.response = response;
 	}
 

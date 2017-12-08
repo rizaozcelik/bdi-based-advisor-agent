@@ -3,11 +3,11 @@ package agents;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 
-import java.sql.Statement;
-
 import misc.Offer;
+import misc.OfferResponse;
 import misc.Recommendation;
 
 public class MovieNegotiator extends Negotiator {
@@ -17,28 +17,22 @@ public class MovieNegotiator extends Negotiator {
 		super(agentID, acceptanceParameter);
 		this.recommendations = recommendations;
 	}
+
 	@Override
-	public Offer evaluate(Offer receivedOffer) {
+	public OfferResponse evaluate(Offer receivedOffer) {
 		if (receivedOffer == null) {
 			// this is the first round.
-			return rejectOffer();
+			return null;
 		}
-		computePersonalUtility(receivedOffer.getTypeID());
-		return acceptOffer();
-	}
-
-	@Override
-	Offer acceptOffer() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	Offer rejectOffer() {
+	public Offer proposeOffer() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
 	public double computePersonalUtility(int typeID) {
 		final String DB_URL = "jdbc:mysql://localhost/movie";

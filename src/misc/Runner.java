@@ -32,7 +32,7 @@ public class Runner {
 		// System.out.println(r);
 		// }
 		Negotiator neg4218 = new MovieNegotiator(4218, 1, recommendations4218);
-		neg4218.evaluate(new Offer(1, 1, 79, 0, OfferResponse.Reject));
+		neg4218.evaluate(new Offer(1, 1, 79, 0, ResponseType.Reject));
 		Scanner scan = new Scanner(new File("events.tsv"));
 		Object[] readEvents = Utils.readEvents(scan, advisor);
 		lastObligedDate = (int) readEvents[0];
