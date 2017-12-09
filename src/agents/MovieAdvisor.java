@@ -333,4 +333,28 @@ public class MovieAdvisor {
 			e.printStackTrace();
 		}
 	}
+	
+	public ArrayList<Integer> getGenrePreferenceOrder() {
+		initDB();
+		ArrayList<Integer> genres = new ArrayList<Integer>();
+		try {
+			Statement stmt = dbConnection.createStatement();
+			String genreQuery = "SELECT genreID, COUNT(movieID) FROM movies.movie_ratings WHERE userID ="+ userID +"GROUP BY genreID ORDER BY COUNT(movieID) DESC";
+			ResultSet rs = stmt.executeQuery(genreQuery);
+			while(rs.next()) {
+				genres.add(rs.getInt("genreID"));
+			}
+			for(int i=1; i<18; i++) {
+				if(!genres.contains(i)) {
+					genres.add(i);
+				}
+			}
+			rs.close();
+			stmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("Error in db query of genrePreference");
+		}
+		return genres;
+	}
 }

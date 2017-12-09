@@ -13,7 +13,7 @@ public class GenreNegotiator extends Negotiator {
 
 	public GenreNegotiator(int agentID, int acceptanceParameter, ArrayList<Integer> genres) {
 		super(agentID, acceptanceParameter);
-		this.genres = genres; //Genre arraylist should be ordered wrt preferences.
+		this.genres = genres; //Genre arraylist should be ordered by genres' preference by the user.
 		numberOfProposes = 0;
 	}
 
