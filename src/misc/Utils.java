@@ -44,7 +44,7 @@ public class Utils {
 
 	}
 
-	public static Object[] readEvents(Scanner scan, MovieAdvisor advisor) {
+	public static Object[] readEvents(Scanner scan, Offer selectedMovie) {
 		scan.nextLine();
 		ArrayList<ArrayList<Event>> events = new ArrayList<ArrayList<Event>>();
 		for (int i = 0; i < Runner.PLANNED_DAY_COUNT; i++) {
@@ -79,8 +79,9 @@ public class Utils {
 			events.get(lastDate).add(event);
 		}
 //		Utils.lastDate = lastDate;
-		addMovies(lastDate, greatestID, events, advisor);
-
+		//addMovies(lastDate, greatestID, events, advisor);
+		MovieEvent m = new MovieEvent(greatestID + 1, "movie", 2, "19-21",(int) (selectedMovie.getOwnerUtility() * 20), true, 0, selectedMovie.getTypeID());
+		events.get(2).add(m);
 		scan.close();
 		return new Object[] { lastObligedDate, lastObligedEndTime, events };
 	}

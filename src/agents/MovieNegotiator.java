@@ -3,6 +3,7 @@ package agents;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
@@ -14,8 +15,10 @@ import misc.ResponseType;
 public class MovieNegotiator extends Negotiator {
 	private ArrayList<Recommendation> recommendations;
 	private int numberOfProposes;
-	public MovieNegotiator(int agentID, int acceptanceParameter, ArrayList<Recommendation> recommendations) {
-		super(agentID, acceptanceParameter);
+
+	public MovieNegotiator(int agentID, int acceptanceParameter, boolean increaseAcceptanceOverTime,
+			ArrayList<Recommendation> recommendations) {
+		super(agentID, acceptanceParameter, increaseAcceptanceOverTime);
 		this.recommendations = recommendations;
 		numberOfProposes = 0;
 	}
@@ -26,22 +29,29 @@ public class MovieNegotiator extends Negotiator {
 			// this is the first round.
 			return null;
 		}
+		// dummy line
+		if (recommendations == null)
+			return null;
+
 		int offeredMovieID = receivedOffer.getTypeID();
 		double utility = computePersonalUtility(offeredMovieID);
 		int i = 0;
-		for(Recommendation rec: recommendations) {
-			if(rec.watchability > utility) {
+		for (Recommendation rec : recommendations) {
+			if (rec.watchability > utility) {
 				i++;
 			}
 		}
 		OfferResponse offer;
-		if(i<acceptanceParameter) {
+		String s = "Agent " + agentID;
+		if (i < acceptanceParameter) {
 			offer = new OfferResponse(ResponseType.Accept, utility);
-		}else {
+			s = s + ": Accepts.\t";
+			
+		} else {
 			offer = new OfferResponse(ResponseType.Reject, utility);
+			s = s + ": Rejects.\t";
 		}
-		// dummy line
-		if(recommendations == null) return null;
+		System.out.print(s);
 		return offer;
 	}
 
@@ -51,8 +61,12 @@ public class MovieNegotiator extends Negotiator {
 		Recommendation offeredRecommendation = recommendations.get(numberOfProposes);
 		int movieID = offeredRecommendation.movieID;
 		double utility = offeredRecommendation.watchability;
-		Offer offer = new Offer(this.agentID,movieID,utility); //RESPONSE TYPE IS NOT REQUIRED FOR OFFER
+		Offer offer = new Offer(this.agentID, movieID, utility); // RESPONSE TYPE IS NOT REQUIRED FOR OFFER
 		numberOfProposes++;
+		if (increaseAcceptenceOverTime) {
+			acceptanceParameter++;
+		}
+		System.out.print("Agent " + agentID + " proposes the movie "+ movieID + ":\t");
 		return offer;
 	}
 
@@ -67,6 +81,7 @@ public class MovieNegotiator extends Negotiator {
 			Class.forName("com.mysql.jdbc.Driver");
 			dbConnection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
 		} catch (Exception e) {
+			//e.printStackTrace();
 			System.out.println("Error in db connection opening in negotiator");
 		}
 
@@ -83,19 +98,27 @@ public class MovieNegotiator extends Negotiator {
 					friendsRating = (int) rs.getInt("movieRating");
 					trustValue = rs.getDouble("trustValue");
 				}
-				System.out.println("balfaldfla");
+				//System.out.println("balfaldfla");
 				String getMovieAvgQuery = "SELECT AVG(movieRating) AS average FROM movie_ratings WHERE movieID = "
 						+ movieID;
 				rs = stmt.executeQuery(getMovieAvgQuery);
 				while (rs.next()) {
 					averageRating = rs.getDouble("average");
 				}
-				System.out.println(trustValue + " " + friendsRating + " " + averageRating);
+				rs.close();
+				//System.out.println(trustValue + " " + friendsRating + " " + averageRating);
 				return trustValue * friendsRating + (1 - trustValue) * averageRating;
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.out.println("Error in db querying");
 			}
+		}
+		
+		try {
+			dbConnection.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return 0;
 	}

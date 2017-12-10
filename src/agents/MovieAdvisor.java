@@ -19,7 +19,6 @@ public class MovieAdvisor {
 	private static final String DB_USER = "root";
 	private static final String DB_PASSWORD = "12345";
 	private static Connection dbConnection;
-
 	private int userID, selectedGenre, preDeterminedGenre;
 	private ArrayList<Recommendation> recommendations;
 	private HashSet<Integer> watchedMovies;
@@ -53,7 +52,7 @@ public class MovieAdvisor {
 				selectedGenre = 14;
 				generateAverageRatingsOfMovies(selectedGenre);
 				populateWatchedMovies(selectedGenre);
-				System.out.println("Going to ask your friends for movie recommendations.");
+				//System.out.println("Going to ask your friends for movie recommendations.");
 				// Get friends recommendations
 				getRecommendationFromFriend(selectedGenre);
 				// remove watched movies from recommendations
@@ -61,15 +60,14 @@ public class MovieAdvisor {
 				// if recommended movies are less than 5 after removing watched
 				// movies
 				if (recommendations.size() < 6) {
-					System.out.println(
-							"Your friends didn't recommend enough movies. Going to ask your friends of friends and to the genre expert. ");
+					//System.out.println("Your friends didn't recommend enough movies. Going to ask your friends of friends and to the genre expert. ");
 					getRecommendationFromFriendsOfFriends(selectedGenre);
 					getProfessionalRecommendation(selectedGenre);
 				}
 				System.out.println();
 				removeWatchedMoviesFromRecommendations();
 				Collections.sort(recommendations);
-				userLog();
+				//userLog();
 				return new ArrayList<Recommendation>(recommendations.subList(0, 6));
 			} else {
 				System.out.println("Error in DB connection");
@@ -84,7 +82,11 @@ public class MovieAdvisor {
 	public ArrayList<Recommendation> getRecommendations() {
 		return recommendations;
 	}
-
+	
+	public void setRecommendations(ArrayList<Recommendation> recommendations) {
+		this.recommendations = recommendations;
+	}
+	
 	public HashMap<Integer, Double> getMovieAverages() {
 		return movieAverages;
 	}
@@ -110,13 +112,13 @@ public class MovieAdvisor {
 		Arrays.fill(weights, 1);
 		double weightSum = 17;
 		ResultSet rs = stmt.executeQuery(averagesQuery);
-		System.out.println("The number of movies the user " + userID + " watched, grouped by their genres:");
+		//System.out.println("The number of movies the user " + userID + " watched, grouped by their genres:");
 		while (rs.next()) {
 			int genreID = (int) rs.getDouble("GENREID");
 			int numOfRatings = rs.getInt("COUNT(MOVIERATING)");
 			weights[genreID - 1] = numOfRatings + 1;
 			weightSum = weightSum + numOfRatings;
-			System.out.println("Genre: " + genreID + "\tNumOfMovies: " + (weights[genreID - 1] - 1));
+			//System.out.println("Genre: " + genreID + "\tNumOfMovies: " + (weights[genreID - 1] - 1));
 		}
 		System.out.println();
 		double result = Math.random() * weightSum;
@@ -334,12 +336,20 @@ public class MovieAdvisor {
 		}
 	}
 	
+	public int getPreDeterminedGenre() {
+		return preDeterminedGenre;
+	}
+
+	public void setPreDeterminedGenre(int preDeterminedGenre) {
+		this.preDeterminedGenre = preDeterminedGenre;
+	}
+	
 	public ArrayList<Integer> getGenrePreferenceOrder() {
 		initDB();
 		ArrayList<Integer> genres = new ArrayList<Integer>();
 		try {
 			Statement stmt = dbConnection.createStatement();
-			String genreQuery = "SELECT genreID, COUNT(movieID) FROM movies.movie_ratings WHERE userID ="+ userID +"GROUP BY genreID ORDER BY COUNT(movieID) DESC";
+			String genreQuery = "SELECT genreID, COUNT(movieID) FROM movies.movie_ratings WHERE userID ="+ userID +" GROUP BY genreID ORDER BY COUNT(movieID) DESC";
 			ResultSet rs = stmt.executeQuery(genreQuery);
 			while(rs.next()) {
 				genres.add(rs.getInt("genreID"));

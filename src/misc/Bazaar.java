@@ -16,20 +16,21 @@ public class Bazaar {
 		maximumTotalUtility = 0;
 	}
 
-	public int runNegotiation() {
+	public Offer runNegotiation() {
 		int numberOfNegotiators = negotiators.size();
 		Offer currentOffer = null;
 		Offer bestOffer = null;
 		int round = 0;
 		boolean accepted = false;
 		while (!accepted && round < 6 * numberOfNegotiators) {
+			System.out.println("\nRound: "+ round);
 			double totalUtility = 0;
 			// Proposer already accepts
 			int acceptanceCount = 1;
-			Negotiator agentToProposeOffer = negotiators.get(round % 6);
+			Negotiator agentToProposeOffer = negotiators.get(round % negotiators.size());
 			currentOffer = agentToProposeOffer.proposeOffer();
 			for (int i = 0; i < numberOfNegotiators; i++) {
-				if (i != round % 6) {
+				if (i != round % negotiators.size()) {
 					OfferResponse response = negotiators.get(i).evaluate(currentOffer);
 					if (response.getType() == ResponseType.Accept) {
 						acceptanceCount++;
@@ -41,21 +42,27 @@ public class Bazaar {
 				}
 			}
 			//SHOULD CHANGE AT LEAST NEEDS TO BE HALF + 1. 
-			accepted = acceptanceCount >= (numberOfNegotiators / 2)+1;
+			accepted = acceptanceCount > numberOfNegotiators / 2;
 			if (totalUtility > maximumTotalUtility) {
 				maximumTotalUtility = totalUtility;
 				bestOffer = currentOffer;
 			}
 			round++;
 		}
-
+		System.out.println();
 		if (accepted) {
-			return currentOffer.getTypeID();
+			System.out.println("Negotiators reached an agreement on the offer of Agent: "+ currentOffer.getOwner());
+			System.out.println();
+			return currentOffer;
 		} else if (forceAgreement) {
-			return bestOffer.getTypeID();
+			System.out.println("Negotiators could not agree on an offer. The offer "+ bestOffer.getTypeID()+" is selected since it has the maximum total utility.");
+			System.out.println();
+			return bestOffer;
 		}
 		System.out.println("No agreement has been established");
-		return -1;
+		System.out.println();
+
+		return null;
 	}
 
 }
